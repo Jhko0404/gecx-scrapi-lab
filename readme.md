@@ -94,7 +94,7 @@ flowchart LR
 
 ## 2. 사전 준비 1단계: 전용 작업실(가상환경) 세팅 및 CXAS SCRAPI 설치하기
 
-가장 먼저 내 컴퓨터에 AI 상담원을 관리할 **전용 작업 폴더**를 만들고, 다른 프로그램과 충돌하지 않도록 **가상환경(`.venv`)** 을 세팅합니다.
+가장 먼저 GitHub에서 공식 **`cxas-scrapi`** 저장소를 내 컴퓨터로 내려받고(`git clone`), 다른 프로그램과 충돌하지 않도록 **전용 가상환경(`.venv`)** 을 세팅합니다.
 
 ---
 
@@ -111,47 +111,71 @@ flowchart LR
 
 ---
 
-### Step 2.2: 필수 프로그램 3가지 설치 여부 확인하기
+### Step 2.2: 필수 프로그램 4가지 설치 여부 확인하기
 
 열린 명령어 창에 아래 명령어를 한 줄씩 복사해서 붙여넣고 **Enter**를 눌러 버전 숫자가 나오는지 확인합니다.
 
 ```bash
-# 1. 파이썬(Python) 버전 확인 (3.10 이상이면 정상입니다, 예: Python 3.11.8)
+# 1. Git 설치 확인 (GitHub에서 코드를 내려받기 위해 필요)
+git --version
+
+# 2. 파이썬(Python) 버전 확인 (3.10 이상이면 정상입니다, 예: Python 3.11.8)
 python3 --version
 # (Windows에서는 python --version 으로 확인하셔도 됩니다)
 
-# 2. 구글 클라우드 도구(gcloud) 설치 확인
+# 3. 구글 클라우드 도구(gcloud) 설치 확인
 gcloud --version
 
-# 3. 클로드 코드(Claude Code) 설치 확인
+# 4. 클로드 코드(Claude Code) 설치 확인
 claude --version
 ```
 
 > [!TIP]
 > **만약 `command not found` 또는 `'...'은(는) 내부 또는 외부 명령...이 아닙니다`라고 나온다면?**
 > 아직 해당 프로그램이 컴퓨터에 설치되지 않은 상태입니다. 아래 공식 링크에서 설치 파일을 내려받아 일반 프로그램처럼 **[다음(Next)]** 을 눌러 설치한 뒤, 터미널 창을 껐다가 다시 열어주세요.
+> - **Git**: [Git 공식 다운로드 페이지](https://git-scm.com/downloads)
 > - **Python (3.10 이상)**: [파이썬 공식 다운로드 페이지](https://www.python.org/downloads/) *(⚠️ Windows 설치 시 첫 화면 하단의 **`Add python.exe to PATH`** 체크박스를 꼭 체크하세요!)*
 > - **Google Cloud SDK (`gcloud`)**: [구글 클라우드 CLI 설치 가이드](https://cloud.google.com/sdk/docs/install?hl=ko)
 > - **Claude Code (`claude`)**: [Claude Code 공식 설치 안내](https://docs.anthropic.com/ko/docs/agents-and-tools/claude-code/overview)
 
 ---
 
-### Step 2.3: 작업용 새 폴더 만들고 파이썬 가상환경(`.venv`) 먼저 세팅하기
+### Step 2.3: GitHub에서 `cxas-scrapi` 공식 저장소 내려받기 (`git clone`)
+
+터미널 창에 아래 명령어를 복사·붙여넣어 Google Cloud 공식 **[`cxas-scrapi` GitHub 저장소](https://github.com/GoogleCloudPlatform/cxas-scrapi)** 를 내 컴퓨터로 복제(`git clone`)하고 해당 폴더 안으로 들어갑니다:
+
+```bash
+git clone https://github.com/GoogleCloudPlatform/cxas-scrapi
+cd cxas-scrapi
+```
+
+이 명령어를 실행하면 내 컴퓨터에 `cxas-scrapi` 폴더가 만들어지며, 그 안에 **CXAS SCRAPI 본체 코드**뿐만 아니라 **클로드 코드가 바로 사용할 수 있는 AI 스킬(`.agents/skills/`)과 자동 안전장치(`.claude/settings.json`)** 까지 한 번에 모두 준비됩니다!
+
+```text
+cxas-scrapi/
+├── src/cxas_scrapi/               # CXAS SCRAPI 핵심 파이썬 라이브러리 및 CLI 코드
+├── .agents/
+│   └── skills/
+│       ├── cxas-agent-foundry/    # ★ 클로드 코드에게 AI 상담원 제작·테스트·디버깅 비법을 알려주는 핵심 매뉴얼
+│       └── cxas-sim-eval/         # ★ 모의고사(시뮬레이션 평가) 변환 및 실행 스킬
+├── .claude/
+│   └── settings.json              # ★ 클로드 코드 전용 자동 설정 (배포 전 자동 문법 검사 Hook 등록)
+├── .gemini/
+│   └── settings.json              # Gemini CLI용 자동 설정
+└── AGENTS.md                      # 클로드 코드가 프로젝트를 처음 읽을 때 참고하는 전체 안내도
+```
+
+---
+
+### Step 2.4: 파이썬 가상환경(`.venv`) 먼저 세팅하고 로컬 패키지 설치하기
 
 > [!IMPORTANT]
 > **왜 가상환경(`.venv`)을 제일 먼저 세팅하나요?**
-> 컴퓨터 전체에 프로그램을 그냥 설치하면 나중에 버전이 꼬이거나 권한 오류가 나기 쉽습니다. 작업 폴더 안에 `.venv`라는 **전용 방(가상환경)** 을 먼저 만들고 그 방 안에 들어가서 설치하면, 언제든 깔끔하고 안전하게 작업할 수 있습니다.
+> 컴퓨터 전체에 프로그램을 그냥 설치하면 나중에 버전이 꼬이거나 권한 오류가 나기 쉽습니다. `cxas-scrapi` 폴더 안에 `.venv`라는 **전용 방(가상환경)** 을 먼저 만들고 그 방 안에 들어가서 설치하면, 언제든 깔끔하고 안전하게 작업할 수 있습니다.
 
-먼저 터미널 창에 아래 명령어를 복사·붙여넣어 **작업 폴더(`my-cx-agent`)** 를 만들고 그 안으로 들어갑니다:
+`cxas-scrapi` 폴더 안에서 본인의 컴퓨터 환경에 맞춰 아래 **1) 가상환경 생성 및 켜기**와 **2) 로컬 소스 설치**를 순서대로 실행하세요.
 
-```bash
-mkdir my-cx-agent
-cd my-cx-agent
-```
-
-이제 본인의 컴퓨터 환경에 맞춰 아래 **[방법 A: 기본 파이썬 방식 (가장 무난함)]** 또는 **[방법 B: `uv` 고속 설치 도구 방식]** 중 **하나만** 선택하여 실행하세요.
-
-#### 방법 A: 기본 파이썬(`venv`)으로 가상환경 만들고 켜기 (별도 도구 설치 불필요 · 권장)
+#### 1) 파이썬 가상환경(`.venv`) 만들고 켜기
 
 - **🍎 Mac / Linux 사용자**:
   ```bash
@@ -172,46 +196,31 @@ cd my-cx-agent
   ```
   *(💡 참고: 만약 Windows PowerShell에서 보안 정책 때문에 빨간 글씨 오류가 뜨면 `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser` 를 한 번 입력 후 `Y`를 누르고 다시 실행하거나, 일반 명령 프롬프트(CMD)에서 `.venv\Scripts\activate.bat`을 실행하세요.)*
 
-#### 방법 B: `uv` 도구가 설치된 경우 (더 빠른 설치를 원할 때)
-
-```bash
-# 1. 가상환경 만들기
-uv venv .venv
-
-# 2. 가상환경 켜기 (Mac/Linux)
-source .venv/bin/activate
-# (Windows PowerShell인 경우: .venv\Scripts\Activate.ps1)
-```
-
 #### ✅ 가상환경이 정상적으로 켜졌는지 확인하는 법
 가상환경이 켜지면 터미널 입력줄 **맨 앞에 `(.venv)`라는 글자**가 붙어 나타납니다!
 ```text
-(.venv) user@MacBook my-cx-agent %
+(.venv) user@MacBook cxas-scrapi %
 ```
 이제부터 모든 설치와 클로드 코드 실행은 이 **`(.venv)`가 켜진 상태**에서 진행합니다.
 
----
+#### 2) 복제된 `cxas-scrapi` 폴더를 가상환경에 설치하기 (`pip install -e .`)
 
-### Step 2.4: `cxas-scrapi` 설치 및 클로드 코드 AI 스킬(`cxas init`) 장착하기
-
-`(.venv)`가 켜진 터미널 창에서 아래 명령어를 순서대로 복사해 실행합니다.
-
-#### 1) `cxas-scrapi` 패키지 설치하기
+`(.venv)`가 켜진 상태에서 아래 명령어를 실행하여 현재 폴더(`.` = `cxas-scrapi`)의 코드를 설치합니다:
 
 ```bash
-# 최신 pip로 업그레이드 후 cxas-scrapi 설치 (약 30~60초 소요)
+# 최신 pip로 업그레이드 후 현재 폴더(cxas-scrapi)를 설치 (약 30~60초 소요)
 pip install --upgrade pip
-pip install cxas-scrapi
+pip install -e .
 ```
-*(만약 `uv`를 사용 중이시라면 `uv pip install cxas-scrapi`로 더 빠르게 설치하실 수 있습니다.)*
+*(💡 참고: 만약 고속 패키지 도구인 `uv`가 설치되어 있다면, 위 과정 대신 `uv sync && source .venv/bin/activate` 또는 내장 자동 설치 스크립트인 `.agents/skills/cxas-agent-foundry/scripts/setup.sh`를 실행하셔도 동일하게 세팅됩니다.)*
 
-#### 2) 설치가 잘 되었는지 확인하기
+#### 3) 설치가 잘 되었는지 확인하기
 
 ```bash
 cxas --help
 ```
 
-화면에 아래와 같이 `usage: cxas [-h] {pull,push,create,...}` 도움말 목록이 출력되면 **CXAS SCRAPI 리모컨 설치가 완료**된 것입니다!
+화면에 아래와 같이 `usage: cxas [-h] {pull,push,create,...}` 도움말 목록이 출력되면 **CXAS SCRAPI 설치가 완벽하게 끝난 것**입니다!
 
 ```text
 usage: cxas [-h] {pull,push,create,delete,branch,apps,export,push-eval,run,
@@ -221,49 +230,12 @@ usage: cxas [-h] {pull,push,create,delete,branch,apps,export,push-eval,run,
 CX Agent Studio Scripting API CLI
 ```
 
-#### 3) 클로드 코드 전용 AI 스킬 및 자동 안전장치 설치하기 (`cxas init`)
-
-이제 현재 폴더에서 클로드 코드가 CX Agent Studio 전문가처럼 일할 수 있도록 **AI 스킬 보따리**를 풀어놓는 명령어를 실행합니다:
-
-```bash
-cxas init
-```
-
-이 명령어 한 줄을 실행하면 내 작업 폴더(`my-cx-agent`) 안에 다음과 같은 파일들이 자동으로 생성됩니다:
-
-```text
-my-cx-agent/
-├── .venv/                         # 방금 만든 파이썬 전용 가상환경
-├── .agents/
-│   └── skills/
-│       ├── cxas-agent-foundry/    # ★ 클로드 코드에게 AI 상담원 제작·테스트·디버깅 비법을 알려주는 핵심 매뉴얼
-│       └── cxas-sim-eval/         # ★ 모의고사(시뮬레이션 평가) 변환 및 실행 스킬
-├── .claude/
-│   └── settings.json              # ★ 클로드 코드 전용 자동 설정 (배포 전 자동 문법 검사 Hook 등록)
-├── .gemini/
-│   └── settings.json              # Gemini CLI용 자동 설정
-└── AGENTS.md                      # 클로드 코드가 프로젝트를 처음 읽을 때 참고하는 전체 안내도
-```
-
 > [!NOTE]
-> **`cxas init`이 클로드 코드에 달아주는 3가지 자동 안전장치 (Hooks)**
-> `.claude/settings.json` 파일 덕분에, 앞으로 클로드 코드가 상담원을 웹 콘솔에 업로드(`push`)할 때마다 사람이 신경 쓰지 않아도 **자동으로 다음 3가지가 실행**됩니다:
+> **`cxas-scrapi` 폴더가 클로드 코드에 기본 장착해 주는 3가지 자동 안전장치 (Hooks)**
+> 폴더 안의 `.claude/settings.json` 파일 덕분에, 앞으로 클로드 코드가 상담원을 웹 콘솔에 업로드(`push`)할 때마다 사람이 신경 쓰지 않아도 **자동으로 다음 3가지가 실행**됩니다:
 > 1. **`pre-agent-push-lint.sh`**: 업로드 직전에 오타나 설정 오류가 없는지 자동으로 `cxas lint` 검사를 수행합니다.
 > 2. **`pre-agent-push.sh`**: 내가 작업하는 동안 다른 사람이 웹 콘솔에서 바꾼 내용(충돌/Drift)이 없는지 미리 확인합니다.
 > 3. **`post-agent-update.sh`**: 웹 콘솔에 변경사항이 반영된 직후 내 컴퓨터 파일과 최신 상태를 자동으로 맞춥니다.
-
-<details>
-<summary>💡 <b>(참고) 만약 구글 엔지니어로부터 <code>cxas-scrapi</code> 전체 소스코드 폴더(Git 저장소)를 직접 전달받으셨다면?</b></summary>
-
-새 폴더에서 `pip install cxas-scrapi`를 하는 대신, 전달받은 `cxas-scrapi` 폴더 안에 포함된 원클릭 자동 설치 스크립트(`setup.sh`)를 실행하셔도 됩니다:
-
-```bash
-cd cxas-scrapi
-.agents/skills/cxas-agent-foundry/scripts/setup.sh
-source .venv/bin/activate
-```
-위 스크립트는 `.venv` 가상환경 생성부터 로컬 `cxas-scrapi` 설치, 프로젝트 설정 마법사까지 한 번에 실행해 줍니다.
-</details>
 
 ---
 
@@ -364,13 +336,13 @@ cxas apps list --project-id YOUR_PROJECT_ID --location us
 
 ### Step 4.1: 가상환경이 켜진 상태에서 클로드 코드 실행하기
 
-터미널 창에서 현재 폴더(`my-cx-agent`)에 있는지, 그리고 줄 맨 앞에 `(.venv)`가 떠 있는지 확인한 뒤 아래 명령어를 입력합니다:
+터미널 창에서 복제한 폴더(`cxas-scrapi`)에 있는지, 그리고 줄 맨 앞에 `(.venv)`가 떠 있는지 확인한 뒤 아래 명령어를 입력합니다:
 
 ```bash
 claude
 ```
 
-클로드 코드가 실행되면서 대화 입력창(`>`)이 나타납니다. 앞서 우리가 `cxas init`을 실행해 두었기 때문에, 클로드 코드는 시작하자마자 폴더 안의 `AGENTS.md`와 `.agents/skills/cxas-agent-foundry/SKILL.md`를 읽고 **"아! 나는 지금 CX Agent Studio AI 상담원을 관리하는 전문가 역할을 해야겠구나!"** 라고 자동으로 준비를 마칩니다.
+클로드 코드가 실행되면서 대화 입력창(`>`)이 나타납니다. `cxas-scrapi` 폴더 안에는 이미 `AGENTS.md`와 `.agents/skills/cxas-agent-foundry/SKILL.md`가 내장되어 있기 때문에, 클로드 코드는 시작하자마자 이를 읽고 **"아! 나는 지금 CX Agent Studio AI 상담원을 관리하는 전문가 역할을 해야겠구나!"** 라고 자동으로 준비를 마칩니다.
 
 ---
 
@@ -569,7 +541,7 @@ cxas push cxas_app/내_상담원_앱_이름 \
 
 ![Skills Flow](assets/diagrams/skills-flow.svg)
 
-우리가 Step 2.4에서 `cxas init`을 실행했을 때 설치된 **`cxas-agent-foundry`** 는 클로드 코드 안에서 작동하는 **"AI 상담원 전문 제작·검수 총괄 팀장님"** 입니다. 여러분이 한국어로 하고 싶은 일을 말하면, 자동으로 다음 3가지 역할 중 알맞은 단계로 연결해 일을 처리합니다:
+우리가 Step 2.3에서 `cxas-scrapi` 저장소를 복제했을 때 함께 포함된 **`cxas-agent-foundry`** (`.agents/skills/cxas-agent-foundry`)는 클로드 코드 안에서 작동하는 **"AI 상담원 전문 제작·검수 총괄 팀장님"** 입니다. 여러분이 한국어로 하고 싶은 일을 말하면, 자동으로 다음 3가지 역할 중 알맞은 단계로 연결해 일을 처리합니다:
 
 1. **🏗️ Build (제작하기)**: 여러분이 말한 기획 내용(PRD)을 바탕으로 상담원 설계도 작성 → 상담원 지침(`instruction.txt`) 작성 → 전산 도구(`tools`) 제작 → 자동 평가 시험지(`evals`) 제작 → 웹 콘솔 배포까지 한 번에 수행합니다.
 2. **🧪 Run (자동 모의고사 실행 및 성적표 발급)**: 만들어진 상담원을 대상으로 도구가 잘 도는지, 대화를 잘하는지 자동 모의고사를 실행하고 **몇 점(합격률 몇 %)인지 리포트**를 만들어 줍니다.
@@ -737,7 +709,7 @@ cxas trace replay 대화_ID \
 
 ### Q1. `cxas: command not found` (또는 `'cxas'은(는) 내부 또는 외부 명령...이 아닙니다`) 라고 나와요!
 - **원인**: 터미널 창을 새로 열면서 **파이썬 가상환경(`.venv`) 켜기를 깜빡**하셨기 때문입니다.
-- **10초 해결법**: 작업 폴더(`my-cx-agent`) 안에서 아래 명령어로 가상환경을 다시 켜주세요.
+- **10초 해결법**: 작업 폴더(`cxas-scrapi`) 안에서 아래 명령어로 가상환경을 다시 켜주세요.
   ```bash
   # Mac / Linux:
   source .venv/bin/activate
@@ -804,9 +776,9 @@ cxas trace replay 대화_ID \
 
 | 순서 / 분류 | 명령어 | 한 줄 설명 |
 | :--- | :--- | :--- |
-| **① 가상환경 켜기** | `source .venv/bin/activate` *(Mac)*<br>`.venv\Scripts\Activate.ps1` *(Win)* | 작업 시작 전 전용 작업실(`.venv`) 입장하기 |
-| **② 구글 로그인** | `gcloud auth login`<br>`gcloud auth application-default login` | 웹 브라우저로 구글 클라우드 계정 로그인 및 통행증 발급 |
-| **③ 스킬 초기 세팅** | `cxas init` | 현재 폴더에 클로드 코드용 AI 스킬 및 자동 검사 안전장치 설치 *(최초 1회)* |
+| **① 저장소 복제 및 이동** | `git clone https://github.com/GoogleCloudPlatform/cxas-scrapi`<br>`cd cxas-scrapi` | 공식 `cxas-scrapi` 저장소 내려받기 *(최초 1회)* |
+| **② 가상환경 켜기 및 설치** | `source .venv/bin/activate` *(Mac)* / `.venv\Scripts\Activate.ps1` *(Win)*<br>`pip install -e .` *(최초 1회)* | 작업 시작 전 전용 작업실(`.venv`) 입장 및 로컬 설치 |
+| **③ 구글 로그인** | `gcloud auth login`<br>`gcloud auth application-default login` | 웹 브라우저로 구글 클라우드 계정 로그인 및 통행증 발급 |
 | **④ 앱 목록 조회** | `cxas apps list --project-id 프로젝트ID --location us` | 내 프로젝트에 있는 AI 상담원 앱 목록과 ID 확인 |
 | **⑤ 다운로드 (백업)** | `cxas pull projects/프로젝트ID/locations/us/apps/앱ID` | 웹 콘솔의 상담원 설정을 내 컴퓨터 폴더(`cxas_app/`)로 내려받기 |
 | **⑥ 문법/구조 검사** | `cxas lint` | 필수 태그 누락, 오타, 파일 구조 오류 등 60+ 규칙 1초 검사 |
